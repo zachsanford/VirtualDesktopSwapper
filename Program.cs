@@ -16,8 +16,10 @@ namespace VirtualDesktopSwapper
         {
             Clear();
             ShowTitle();
-            Thread.Sleep(1500);
+            Thread.Sleep(1750);
             int VDCount = GetVirtualDesktopCount();
+            Clear();
+            ShowTitle();
             int TimeBetween = GetTimeBetweenSwaps() * 1000;
             Clear();
             ShowTitle();
@@ -49,31 +51,23 @@ namespace VirtualDesktopSwapper
 
         private static int GetVirtualDesktopCount()
         {
-            int _vdCount = 0;
-            bool _correctInput = false;
-
-            while (!_correctInput)
+            int _vdCount;
+            Write("Enter the total number of Virtual Desktops there are >> ");
+            while (!Int32.TryParse(ReadLine(), out _vdCount))
             {
-                Write("Enter the total number of Virtual Desktops there are >> ");
-                _correctInput = Int32.TryParse(ReadLine(), out _vdCount);
+                Write("Not a valid input. Enter the total number of Virtual Desktops there are >> ");
             }
-
-            WriteLine();
             return _vdCount;
         }
 
         private static int GetTimeBetweenSwaps()
         {
-            int _time = 0;
-            bool _correctInput = false;
-
-            while (!_correctInput)
+            int _time;
+            Write("Enter the amount of time (in seconds) between Virtual Desktop swaps >> ");
+            while (!Int32.TryParse(ReadLine(), out _time))
             {
-                Write("Please enter the amount of time (in seconds) between Virtual Desktop swaps >> ");
-                _correctInput = Int32.TryParse(ReadLine(), out _time);
+                Write("Not a valid input. Enter the amount of time (in seconds) between Virtual Desktop swaps >> ");
             }
-
-            WriteLine();
             return _time;
         }
 
