@@ -7,23 +7,26 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using static System.Console;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace VirtualDesktopSwapper
 {
     class Program
     {
+        [DllImport("User32.dll", CallingConvention = CallingConvention.StdCall, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool ShowWindow([In] IntPtr hWnd, [In] int nCmdShow);
+
         static void Main(string[] args)
         {
             Clear();
             ShowTitle();
             Thread.Sleep(1750);
-            int VDCount = GetVirtualDesktopCount();
-            Clear();
-            ShowTitle();
-            int TimeBetween = GetTimeBetweenSwaps() * 1000;
-            Clear();
-            ShowTitle();
-            RunVirtualDesktopSwapper(VDCount, TimeBetween);
+            int[] settings = GetConfig();
+            IntPtr handle = Process.GetCurrentProcess().MainWindowHandle;
+            ShowWindow(handle, 6);
+            RunVirtualDesktopSwapper(settings[0], settings[1]);
         }
 
         private static void ShowTitle()
@@ -49,28 +52,6 @@ namespace VirtualDesktopSwapper
             WriteLine();
         }
 
-        private static int GetVirtualDesktopCount()
-        {
-            int _vdCount;
-            Write("Enter the total number of Virtual Desktops there are >> ");
-            while (!Int32.TryParse(ReadLine(), out _vdCount))
-            {
-                Write("Not a valid input. Enter the total number of Virtual Desktops there are >> ");
-            }
-            return _vdCount;
-        }
-
-        private static int GetTimeBetweenSwaps()
-        {
-            int _time;
-            Write("Enter the amount of time (in seconds) between Virtual Desktop swaps >> ");
-            while (!Int32.TryParse(ReadLine(), out _time))
-            {
-                Write("Not a valid input. Enter the amount of time (in seconds) between Virtual Desktop swaps >> ");
-            }
-            return _time;
-        }
-
         private static void RunVirtualDesktopSwapper(int _vdCount, int _time)
         {
             InputSimulator _sim = new InputSimulator();
@@ -85,10 +66,50 @@ namespace VirtualDesktopSwapper
 
                 for (int i = 0; i < _vdCount; i++)
                 {
-                    Thread.Sleep(_time);
+                    Thread.Sleep(_time * 1000);
                     _sim.Keyboard.ModifiedKeyStroke(new[] { VirtualKeyCode.CONTROL, VirtualKeyCode.LWIN }, VirtualKeyCode.RIGHT);
                 }
             }
+        }
+
+        private static int[] GetConfig()
+        {
+            int[] _configSettings = new int[2];
+            string[] _disposableArray;
+            string[] file = System.IO.File.ReadAllLines("vds.cfg");
+            foreach (string line in file)
+            {
+                if (!line.StartsWith("#"))
+                {
+                    _disposableArray = line.Split('=');
+                    try
+                    {
+                        if (_disposableArray[0] == "DESKTOPS")
+                        {
+                            _configSettings[0] = Convert.ToInt32(_disposableArray[1]);
+                        }
+                        else if (_disposableArray[0] == "TIME_BETWEEN_SWAP")
+                        {
+                            _configSettings[1] = Convert.ToInt32(_disposableArray[1]);
+                        }
+                        else
+                        {
+                            WriteLine("ERROR IN CONFIGURATION: Incorrect configuration type. Make sure settings are in a numeric value and there are no extra lines or values in the configuration file");
+                            ReadLine();
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        WriteLine("ERROR IN CONFIGURATION: Wrong input type. Make sure settings are in a numeric value and there are no extra lines or values in the configuration file.");
+                        WriteLine();
+                        Write("Press any key to QUIT...");
+                        ReadLine();
+                        Environment.Exit(1);
+                    }
+                }
+            }
+
+            return _configSettings;
         }
     }
 }
